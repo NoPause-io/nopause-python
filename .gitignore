@@ -1,0 +1,8 @@
+# Python
+*.egg-info
+*.egg
+__pycache__
+
+# vscode
+.vscode/settings.json
+.vscode/launch.json
