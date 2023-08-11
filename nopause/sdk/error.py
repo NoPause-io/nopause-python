@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-class APIError:
+class APIError(Exception):
     """Base class for all NoPause API errors."""
 
     def __init__(self, message: str, code: Optional[int] = None):

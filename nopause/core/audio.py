@@ -1,9 +1,8 @@
 """ A simple wrapper of returned audio data from NoPause
 """
-from dataclasses import dataclass
+from pydantic import BaseModel
 
-@dataclass
-class AudioChunk:
+class AudioChunk(BaseModel):
     """A simple wrapper of returned audio data from NoPause
     """
     data: bytes
@@ -12,7 +11,7 @@ class AudioChunk:
     channels: int
     rtf: float
     chunk_size_us: int
-    is_last_chunk: bool
+    # is_last_chunk: bool
 
     @property
     def duration(self) -> float:
@@ -23,3 +22,7 @@ class AudioChunk:
     def n_samples(self):
         """Return number of samples."""
         return len(self.data) // 2
+
+class TextChunk(BaseModel):
+    text: str
+    is_end: bool = False

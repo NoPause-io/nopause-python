@@ -3,10 +3,11 @@
 
 import os
 
-from .core import AudioChunk
+from .core import AudioChunk, TextChunk
 from .sdk import (
     Synthesis,
     AudioConfig,
+    ModelConfig,
     DualStreamConfig,
     APIError,
     InvalidRequestError,
@@ -14,20 +15,20 @@ from .sdk import (
 )
 from .version import VERSION
 
-api_key = os.environ.get("NOPAUSE_API_KEY")
-
-api_base = os.environ.get("NOPAUSE_API_BASE", "wss://api.nopause.com/v1")
-
-api_version = os.environ.get(
-    "NOPAUSE_API_VERSION",
-)
+api_key = None
+api_base = 'wss://api.nopause.com/'
+api_version = 'v1'
 
 __version__ = VERSION
+
 __all__ = [
     "APIError",
     "AudioConfig",
     "AudioChunk",
+    "TextChunk",
+    "AudioConfig",
     "DualStreamConfig",
+    "ModelConfig",
     "InvalidRequestError",
     "NoPauseError",
     "Synthesis",
