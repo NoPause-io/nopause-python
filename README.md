@@ -16,10 +16,27 @@ To use NoPause SDK, you will need an API key. You could get one by signing up at
 
 Here's an example of using NoPause TTS along with OpenAI's ChatGPT API:
 
+(1) Install [OpenAI](https://github.com/openai/openai-python) SDK to access ChatGPT
+```
+pip install openai
+```
+(2) Install [PyAudio](https://pypi.org/project/PyAudio/) to play audio locally
+```
+# Windows
+python -m pip install pyaudio
+
+# Mac
+brew install portaudio
+pip install pyaudio
+```
+
+(3) Fill in the API keys for both OpenAI and NoPause, then run this example
+
 ```python
+import time
+import pyaudio
 import openai
 import nopause
-import pyaudio
 
 openai.api_key = "your_openai_api_key_here"
 nopause.api_key = "your_nopause_api_key_here"
@@ -28,21 +45,23 @@ def chatgpt_stream(prompt: str):
     responses = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "system", "content": "You are a helpful assistant from NoPause IO."},
                 {"role": "user", "content": prompt},
         ],
         stream=True,
     )
+    print("[User]: {}".format(prompt))
+    print("[Assistant]: ", end='')
     for response in responses:
-        yield response["choices"][0]["delta"].get("content", '')
+        content = response["choices"][0]["delta"].get("content", '')
+        print(content, end='')
+        yield content
+    print('')
 
-audio_chunks = nopause.Synthesis.stream(
-    chatgpt_stream("How to make a cake?"),
-    voice_id="david",
-)
+text_generator = chatgpt_stream("Hello, who are you?")
+audio_chunks = nopause.Synthesis.stream(text_generator, voice_id="Zoe")
 
 p = pyaudio.PyAudio()
-
 stream = p.open(
     format=pyaudio.paInt16,
     channels=1,
@@ -53,13 +72,17 @@ stream = p.open(
 for chunk in audio_chunks:
     stream.write(chunk.data)
 
+time.sleep(1)
+
 stream.close()
 p.terminate()
 ```
 
+For more examples, such as ```Asynchronous Streaming Audio Synthesis and Playing``` or ```Interrupting Synthesis```, see [examples/*.py](examples/) and [tests/*.py](tests/).
+
 ## API Reference
 
-### `class Synthesis`
+### `Class Synthesis`
 
 A WebSocket client for NoPause TTS synthesis API.
 
@@ -85,4 +108,4 @@ Creates a dual-stream synthesis.
 
 #### `Synthesis.astream()`
 
-Creates a dual-stream synthesis (asynchronous version).
+Creates a dual-stream synthesis (asynchronous version). It will return a agenerator of `AudioChunk` objects.
