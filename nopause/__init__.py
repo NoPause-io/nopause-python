@@ -16,7 +16,7 @@ from .sdk import (
 from .version import VERSION
 
 api_key = None
-api_base = 'wss://api.nopause.com/'
+api_base = 'wss://api.nopause.io/'
 api_version = 'v1'
 
 __version__ = VERSION
