@@ -5,10 +5,10 @@ import pyaudio
 import openai
 import nopause
 
-# insall sdk packages first:
+# Install sdk packages first:
 #      pip install openai nopause
 
-# for pyaudio (see https://pypi.org/project/PyAudio/):
+# For pyaudio (see https://pypi.org/project/PyAudio/):
 #  * windows
 #     python -m pip install pyaudio
 #  * mac
@@ -28,20 +28,21 @@ def chatgpt_stream(prompt: str):
         stream=True,
     )
     print("[User]: {}".format(prompt))
-    print("[Assistant]: ", end='')
+    print("[Assistant]: ", end='', flush=True)
     for response in responses:
         content = response["choices"][0]["delta"].get("content", '')
-        print(content, end='')
+        print(content, end='', flush=True)
         yield content
-    print('')
+    print()
 
 def text_stream():
     sentence = "Hello, how are you?"
-    print("[Text]: ")
+    print("[Text]: ", end='', flush=True)
     for char in sentence:
-        print(char, end='')
+        time.sleep(0.01) # simulate streaming text
+        print(char, end='', flush=True)
         yield char
-    print('')
+    print()
 
 def main():
     # Note: openai key is needed for chatgpt
@@ -69,6 +70,8 @@ def main():
 
     stream.close()
     p.terminate()
+
+    print('Play done.')
 
 if __name__ == '__main__':
     main()

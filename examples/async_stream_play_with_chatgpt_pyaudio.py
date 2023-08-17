@@ -5,10 +5,10 @@ import pyaudio
 import openai
 import nopause
 
-# insall sdk packages first:
+# Install sdk packages first:
 #      pip install openai nopause
 
-# for pyaudio (see https://pypi.org/project/PyAudio/):
+# For pyaudio (see https://pypi.org/project/PyAudio/):
 #  * windows
 #     python -m pip install pyaudio
 #  * mac
@@ -28,30 +28,30 @@ async def chatgpt_stream(prompt: str):
         stream=True,
     )
     print("[User]: {}".format(prompt))
-    print("[Assistant]: ", end='')
+    print("[Assistant]: ", end='', flush=True)
     async for response in responses:
         content = response["choices"][0]["delta"].get("content", '')
-        print(content, end='')
+        print(content, end='', flush=True)
         yield content
-    print('')
+    print()
 
 async def text_stream():
     sentence = "Hello, how are you?"
-    print("[Text]: ")
+    print("[Text]: ", end='', flush=True)
     for char in sentence:
-        print(char, end='')
+        await asyncio.sleep(0.01) # simulate streaming text and avoid blocking
+        print(char, end='', flush=True)
         yield char
-        await asyncio.sleep(0.001)
-    print('')
+    print()
 
 async def main():
     # Note: openai key is needed for chatgpt
     text_stream_type = 'chatgpt' # chatgpt | text
 
     if text_stream_type == 'chatgpt':
-        text_agenerator = await chatgpt_stream("Hello, who are you?")
+        text_agenerator = chatgpt_stream("Hello, who are you?")
     else:
-        text_agenerator = await text_stream()
+        text_agenerator = text_stream()
 
     audio_chunks = await nopause.Synthesis.astream(text_agenerator, voice_id="Zoe")
 
@@ -70,6 +70,8 @@ async def main():
 
     stream.close()
     p.terminate()
+
+    print('Play done.')
 
 if __name__ == '__main__':
     asyncio.run(main())
