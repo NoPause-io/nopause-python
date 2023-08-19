@@ -16,8 +16,8 @@ def main():
 
     for audio_chunk in synthesis_result_generator:
         print(audio_chunk.chunk_id, audio_chunk.duration)
+        # it will auto-break the 'for' grammar
         synthesis_result_generator.terminate()
-        break
     print('Break Done.')
 
 

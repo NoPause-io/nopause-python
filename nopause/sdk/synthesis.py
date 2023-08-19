@@ -112,14 +112,17 @@ class SynthesisResultGenerator:
 
     def terminate(self):
         assert not self.use_async
+        self.is_end = True
         if not self.send_text_task.done():
             self.send_text_task.cancel()
         self.close()
 
     async def aterminate(self):
         assert self.use_async
+        self.is_end = True
         if not self.send_text_task.done():
             self.send_text_task.cancel()
+            await self.send_text_task
         await self.aclose()
 
     def close(self):

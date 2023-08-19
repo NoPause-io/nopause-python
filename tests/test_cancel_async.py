@@ -16,8 +16,8 @@ async def main():
 
     async for audio_chunk in synthesis_result_generator:
         print(audio_chunk.chunk_id, audio_chunk.duration)
+        # it will auto-break the 'for' grammar
         await synthesis_result_generator.aterminate()
-        break # otherwise it will raise a websockets.exceptions.ConnectionClosed because the ws client has been closed
     print('Break Done.')
 
 if __name__ == '__main__':
