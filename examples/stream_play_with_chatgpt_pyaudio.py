@@ -1,4 +1,4 @@
-# Copyright 2023 NoPause IO
+# Copyright 2023 NoPause
 
 import time
 import pyaudio

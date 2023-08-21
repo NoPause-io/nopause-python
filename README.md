@@ -27,8 +27,6 @@ pip install sounddevice
 
 ```python
 import time
-import threading
-import queue
 import sounddevice as sd
 import nopause
 
@@ -45,41 +43,15 @@ def text_stream():
 text_generator = text_stream()
 audio_chunks = nopause.Synthesis.stream(text_generator, voice_id="Zoe")
 
-q = queue.Queue()
-event = threading.Event()
-input_done = False
-
-def callback(outdata, frames, time, status):
-    global input_done
-    if q.empty():
-        outdata[:] = b'\x00' * len(outdata)
-        if input_done:
-            event.set()
-        return
-    chunk_data = q.get()
-    # single channel
-    outdata[:len(chunk_data)] = chunk_data
-    if len(chunk_data) < len(outdata):
-        outdata[len(chunk_data):] = b'\x00' * (len(outdata) - len(chunk_data))
-    if input_done and q.empty():
-        event.set()
-
-samplerate = 24000
-blocksize = 4800
 stream = sd.RawOutputStream(
-    samplerate=samplerate, blocksize=blocksize,
-    device=sd.query_devices(kind="output")['index'],
-    channels=1, dtype='int16',
-    callback=callback)
+        samplerate=24000, blocksize=4800,
+        device=sd.query_devices(kind="output")['index'],
+        channels=1, dtype='int16',
+        )
 
 with stream:
     for chunk in audio_chunks:
-        # Note, a block of int16 (blocksize*1 16-bit) = two blocks of bytes (blocksize*2 8-bit)
-        for i in range(0, len(chunk.data), blocksize*2):
-            q.put_nowait(chunk.data[i:i+blocksize*2])
-    input_done = True
-
-    event.wait()
+        stream.write(chunk.data)
     time.sleep(1)
 
 print('Play done.')
@@ -99,8 +71,6 @@ Note, the API key of ChatGPT should be applied from OpenAI first.
 
 ```python
 import time
-import threading
-import queue
 import sounddevice as sd
 import openai
 import nopause
@@ -129,41 +99,15 @@ def chatgpt_stream(prompt: str):
 text_generator = chatgpt_stream('Hello, who are you?')
 audio_chunks = nopause.Synthesis.stream(text_generator, voice_id="Zoe")
 
-q = queue.Queue()
-event = threading.Event()
-input_done = False
-
-def callback(outdata, frames, time, status):
-    global input_done
-    if q.empty():
-        outdata[:] = b'\x00' * len(outdata)
-        if input_done:
-            event.set()
-        return
-    chunk_data = q.get()
-    # single channel
-    outdata[:len(chunk_data)] = chunk_data
-    if len(chunk_data) < len(outdata):
-        outdata[len(chunk_data):] = b'\x00' * (len(outdata) - len(chunk_data))
-    if input_done and q.empty():
-        event.set()
-
-samplerate = 24000
-blocksize = 4800
 stream = sd.RawOutputStream(
-    samplerate=samplerate, blocksize=blocksize,
-    device=sd.query_devices(kind="output")['index'],
-    channels=1, dtype='int16',
-    callback=callback)
+        samplerate=24000, blocksize=4800,
+        device=sd.query_devices(kind="output")['index'],
+        channels=1, dtype='int16',
+        )
 
 with stream:
     for chunk in audio_chunks:
-        # Note, a block of int16 (blocksize*1 16-bit) = two blocks of bytes (blocksize*2 8-bit)
-        for i in range(0, len(chunk.data), blocksize*2):
-            q.put_nowait(chunk.data[i:i+blocksize*2])
-    input_done = True
-
-    event.wait()
+        stream.write(chunk.data)
     time.sleep(1)
 
 print('Play done.')
