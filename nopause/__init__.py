@@ -4,6 +4,7 @@
 from .core import AudioChunk, TextChunk
 from .sdk import (
     Synthesis,
+    Voice,
     AudioConfig,
     ModelConfig,
     DualStreamConfig,
@@ -30,6 +31,7 @@ __all__ = [
     "InvalidRequestError",
     "NoPauseError",
     "Synthesis",
+    "Voice",
     "api_base",
     "api_key",
     "api_version",

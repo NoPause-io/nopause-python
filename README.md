@@ -134,6 +134,7 @@ Creates a dual-stream synthesis.
 - `language`: Which language to use (default: `'en'`).
 - `dual_stream_config`: A `DualStreamConfig` object (default: `None`).
 - `audio_config`: An `AudioConfig` object (default: `None`).
+- `api_key`: The API key of NoPause. (default: `None`).
 - `api_base`: The base URL for the NoPause API (default: `None`).
 - `api_version`: The version of the NoPause API to use (default: `None`).
 
@@ -143,4 +144,74 @@ Creates a dual-stream synthesis.
 
 #### `Synthesis.astream()`
 
-Creates a dual-stream synthesis (asynchronous version). It will return a agenerator of `AudioChunk` objects.
+Creates a dual-stream synthesis (asynchronous version). The arguments are the same as `Synthesis.stream()`, except that the `text_iter` should be an asynchronous generator. And it returns an asynchronous generator of `AudioChunk` objects.
+
+
+### `Class Voice`
+
+The voice APIs provides the addition and deletion of custom voice, and can also list all current voices.
+
+#### `Voice.add()`
+
+This API could be used to add a new voice with custom audios.
+
+##### Arguments
+
+- `audio_files`: A list of local file path of audios to create a custom voice. All auidos should be sampled from the same person. (max number of files: `10`)
+- `voice_name`: Custom voice name. if not provided, it will be randomly generated. (default: `None`)
+- `language`: The language of target voice. (default: `en`)
+- `description`: The description of target voice. (default: `None`)
+- `gender`: The gender of target voice. (default: `None`)
+- `api_key`: The API key of NoPause. (default: `None`).
+- `api_base`: The base URL for the NoPause API (default: `None`).
+- `api_version`: The version of the NoPause API to use (default: `None`).
+
+##### Returns
+
+`AddVoiceResponse`
+
+- `voice_id`: The generated voice ID for the target voice.
+- `voice_name`: The name of target voice.
+- `trace_id`: An ID used to track the current request. It can help locate reported issues.
+
+
+#### `Voice.get_voices()`
+
+This API is used to list available voices page by page.
+
+##### Arguments
+
+- `page`: The index of page to view. (1-based, default: `1`)
+- `page_size`: The size of one page. (default: `10`)
+- `api_key`: The API key of NoPause. (default: `None`).
+- `api_base`: The base URL for the NoPause API (default: `None`).
+- `api_version`: The version of the NoPause API to use (default: `None`).
+
+##### Returns
+
+`VoicesResponse`
+
+- `voices`: A list of a series voice which contains the `voice_name: str`, `voice_id: str`, `voice_type: str`, `description: str` and `audios: list[audio_filename]`
+- `total`: Total numbers of avaiable voices rather than the number of returned voices of current page.
+- `trace_id`: An ID used to track the current request. It can help locate reported issues.
+
+
+#### `Voice.delete()`
+
+This API could be used to delte a custom voice by voice ID.
+
+##### Arguments
+
+- `voice_id`: The voice ID of target voice to delete.
+- `api_key`: The API key of NoPause. (default: `None`).
+- `api_base`: The base URL for the NoPause API (default: `None`).
+- `api_version`: The version of the NoPause API to use (default: `None`).
+
+##### Returns
+
+`DeleteVoiceResponse`
+
+- `voice_id`: The unique voice ID of target voice.
+- `voice_name`: The name of target voice.
+- `trace_id`: An ID used to track the current request. It can help locate reported issues.
+

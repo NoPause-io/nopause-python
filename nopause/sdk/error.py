@@ -16,15 +16,19 @@ class APIError(Exception):
         self.code = code
 
     def __str__(self):
-        return f"{self.__class__.__name__}: {self.message}"
+        if self.code is None:
+            return f"{self.message}"
+        else:
+            return f"{self.message} (code={self.code})"
 
     def __repr__(self):
         return f"{self.__class__.__name__}(message={self.message!r}, code={self.code!r})"
 
+class FormatError(APIError):
+    """Raised when the format is invalid."""
 
 class InvalidRequestError(APIError):
     """Raised when the request is invalid."""
-
 
 class NoPauseError(APIError):
     """Raised when the NoPause API returns an error."""
