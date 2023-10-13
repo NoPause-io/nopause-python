@@ -1,8 +1,6 @@
 """ NoPause Python SDK
 """
 
-import os
-
 from .core import AudioChunk, TextChunk
 from .sdk import (
     Synthesis,
@@ -16,7 +14,7 @@ from .sdk import (
 from .version import VERSION
 
 api_key = None
-api_base = 'wss://api.nopause.io/'
+api_base = 'api.nopause.io'
 api_version = 'v1'
 
 __version__ = VERSION

@@ -7,16 +7,16 @@ import asyncio
 import threading
 import websockets
 import ujson as json
+import ssl
 from typing import Any, Iterable, AsyncIterable, Union
 from websockets.client import WebSocketClientProtocol
 from websockets.sync.client import ClientConnection
 
 import nopause
 from nopause.core.audio import AudioChunk, TextChunk
+from nopause.sdk.base import BaseAPI
 from nopause.sdk.config import ModelConfig, AudioConfig, DualStreamConfig
 from nopause.sdk.error import InvalidRequestError, NoPauseError
-
-SYNTHESIS_API_NAME = 'tts/dual-stream'
 
 DEFAULT_MODEL_NAME = 'nopause-en-beta'
 DEFAULT_LANGUAGE = 'en'
@@ -141,37 +141,11 @@ class SynthesisResultGenerator:
         except websockets.exceptions.WebSocketException.ConnectionClosed:
             pass
 
-class Synthesis:
+class Synthesis(BaseAPI):
     """ A WebSocket client for NoPause TTS synthesis API.
     """
-    @staticmethod
-    def parse_setting(name, env_name, value):
-        # function_param > environment > nopause.env
-        if value:
-            final_value = value
-            parsed_from = 'function_param: {}'.format(name)
-        else:
-            env_value = os.environ.get(env_name, None)
-            if env_value is None:
-                final_value = getattr(nopause, name)
-                parsed_from = 'nopause.{}'.format(name)
-            else:
-                final_value = env_value
-                parsed_from = 'environment: {}'.format(env_name)
-        
-        if final_value is None or final_value.strip() == "":
-            raise NoPauseError(f'No {env_name} provided (parsed from {parsed_from}). Set the key by function param or {env_name} environment variable or nopause.{name} first.')
-
-        return dict(value=final_value, parsed_from=parsed_from)
-
-
-    @classmethod
-    def parse_settings(cls, api_key: str = None, api_base: str = None, api_version: str = None) -> dict:
-        parsed_api_key = cls.parse_setting('api_key', 'NO_PAUSE_API_KEY', api_key)
-        parsed_api_base = cls.parse_setting('api_base', 'NO_PAUSE_API_BASE', api_base)
-        parsed_api_version = cls.parse_setting('api_version', 'NO_PAUSE_API_VERSION', api_version)
-
-        return parsed_api_key, parsed_api_base, parsed_api_version
+    name: str = 'tts/dual-stream'
+    protocol: str = 'wss://'
 
     @staticmethod
     def prepare_bos_and_eos(
@@ -217,18 +191,17 @@ class Synthesis:
             A generator of AudioChunk objects.
         """
         parsed_api_key, parsed_api_base, parsed_api_version = cls.parse_settings(api_key, api_base, api_version)
-        api_url = os.path.join(parsed_api_base['value'], parsed_api_version['value'], SYNTHESIS_API_NAME)
+        api_url = cls.protocol + os.path.join(parsed_api_base['value'], parsed_api_version['value'], cls.name)
         try:
             websocket = websockets.sync.client.connect(
                 api_url,
                 additional_headers={
-                    'X-API-KEY': parsed_api_key['value']
+                    'X-API-KEY': parsed_api_key['value'],
+                    'NOPAUSE_PYTHON_SDK_VERSION': nopause.__version__,
                 }
             )
-        except websockets.exceptions.WebSocketException as e:
-            raise InvalidRequestError(
-                f'{str(e)}\n\n[NoPause Settings] (Parsing Order: function_param > environment > nopause.env)'
-                f'\n* API_BASE: {parsed_api_base}\n* API_VERSION: {parsed_api_version}\n* API_URL: {api_url}')
+        except (websockets.exceptions.WebSocketException, TimeoutError, ssl.SSLError) as e:
+            raise InvalidRequestError(cls.display_parsed_settings(parsed_api_base, parsed_api_version, api_url, error=str(e)))
         except BaseException as e:
             raise e
 
@@ -282,21 +255,20 @@ class Synthesis:
         """ Async version of stream()
         """
         parsed_api_key, parsed_api_base, parsed_api_version = cls.parse_settings(api_key, api_base, api_version)
-        api_url = os.path.join(parsed_api_base['value'], parsed_api_version['value'], SYNTHESIS_API_NAME)
+        api_url = cls.protocol + os.path.join(parsed_api_base['value'], parsed_api_version['value'], cls.name)
         try:
             websocket = await websockets.client.connect(
                 api_url,
                 extra_headers={
-                    'X-API-KEY': parsed_api_key['value']
+                    'X-API-KEY': parsed_api_key['value'],
+                    'NOPAUSE_PYTHON_SDK_VERSION': nopause.__version__,
                 }
             )
-        except websockets.exceptions.WebSocketException as e:
+        except (websockets.exceptions.WebSocketException, TimeoutError, ssl.SSLError) as e:
             # Do not record the api key to avoid leakage. 
             # If the api key is provided but the request response is 403, 
             # it is likely that the api key or api version verification failed
-            raise InvalidRequestError(
-                f'{str(e)}\n\n[NoPause Settings] (Parsing Order: function_param > environment > nopause.env)'
-                f'\n* API_BASE: {parsed_api_base}\n* API_VERSION: {parsed_api_version}\n* API_URL: {api_url}')
+            raise InvalidRequestError(cls.display_parsed_settings(parsed_api_base, parsed_api_version, api_url, error=str(e)))
         except BaseException as e:
             raise e
 
