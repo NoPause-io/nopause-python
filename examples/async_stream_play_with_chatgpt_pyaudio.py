@@ -29,11 +29,13 @@ async def chatgpt_stream(prompt: str):
     )
     print("[User]: {}".format(prompt))
     print("[Assistant]: ", end='', flush=True)
-    async for response in responses:
-        content = response["choices"][0]["delta"].get("content", '')
-        print(content, end='', flush=True)
-        yield content
-    print()
+    async def agenerator():
+        async for response in responses:
+            content = response["choices"][0]["delta"].get("content", '')
+            print(content, end='', flush=True)
+            yield content
+        print()
+    return agenerator()
 
 async def text_stream():
     sentence = "Hello, how are you?"

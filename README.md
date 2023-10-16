@@ -89,12 +89,14 @@ def chatgpt_stream(prompt: str):
     )
     print("[User]: {}".format(prompt))
     print("[Assistant]: ", end='')
-    for response in responses:
-        content = response["choices"][0]["delta"].get("content", '')
-        print(content, end='')
-        yield content
-    print()
 
+    def generator():
+        for response in responses:
+            content = response["choices"][0]["delta"].get("content", '')
+            print(content, end='')
+            yield content
+        print()
+    return generator
 
 text_generator = chatgpt_stream('Hello, who are you?')
 audio_chunks = nopause.Synthesis.stream(text_generator, voice_id="Zoe")

@@ -25,11 +25,13 @@ def chatgpt_stream(prompt: str):
     )
     print("[User]: {}".format(prompt))
     print("[Assistant]: ", end='', flush=True)
-    for response in responses:
-        content = response["choices"][0]["delta"].get("content", '')
-        print(content, end='', flush=True)
-        yield content
-    print()
+    def generator():
+        for response in responses:
+            content = response["choices"][0]["delta"].get("content", '')
+            print(content, end='', flush=True)
+            yield content
+        print()
+    return generator()
 
 def text_stream():
     sentence = "Hello, how are you?"
