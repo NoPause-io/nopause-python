@@ -20,7 +20,7 @@ nopause.api_key = "your_nopause_api_key_here"
 
 def chatgpt_stream(prompt: str):
     responses = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+        model="gpt-3.5-turbo-0613",
         messages=[
                 {"role": "system", "content": "You are a helpful assistant from NoPause IO."},
                 {"role": "user", "content": prompt},
