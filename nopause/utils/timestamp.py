@@ -17,12 +17,21 @@ class Event(BaseModel):
 class EventTimeStamp():
     def __init__(self) -> None:
         self.data = []
+        self.point()
+
+    def point(self):
+        self.start = time.time()
 
     def add(self, **kwargs):
         if 'start' not in kwargs:
-            kwargs['start'] = time.time()
+            if 'use_point' in kwargs:
+                kwargs['start'] = self.start
+                kwargs['end'] = time.time()
+            else:
+                kwargs['start'] = time.time()
         event = Event(**kwargs)
         self.data.append(event)
+        self.point()
 
     def export(self, path):
         min_time = 0
