@@ -14,7 +14,7 @@ pip install nopause
 
 To use NoPause SDK, you will need an API key. You could get one by signing up at [NoPause](https://nopause.io/).
 
-### Stream Synthetic Audio and Playback
+### Stream Synthesizing Audio and Playback
 
 Here's an example to synthesize audio using NoPause and stream play the audio:
 
@@ -115,6 +115,26 @@ with stream:
 print('Play done.')
 ```
 
+### Try Synthesis with Chat Mode
+You can also use the chat example to communicate with GPT or repeat a sentence to try the synthesis.
+
+```
+# install extra package
+pip install python-dotenv readline
+
+# prepare API key in the workdir based on .env file
+echo "OPENAI_API_KEY=<your-openai-key>" >> .env
+echo "NOPAUSE_API_KEY=<your-nopause-key>" >> .env
+
+# run the example
+python examples/chat.py
+```
+
+Note that there are several commands you can input in the chat mode:
+`[done]`: end the current conversation and prepare for a new one. It will clear the memory of GPT.
+`[exit]`: exit the chat mode and export a timestamp record to a file.
+`[repeat] content` or `[r] content`: the assistant will repeat your content. It is used to test what you want to synthesize. The content is not added to the GPT memory.
+
 For more examples, such as ```Asynchronous Streaming Audio Synthesis and Playing``` or ```Interrupting Synthesis```, see [examples/*.py](examples/) and [tests/*.py](tests/).
 
 ## API Reference
@@ -148,6 +168,14 @@ Creates a dual-stream synthesis.
 
 Creates a dual-stream synthesis (asynchronous version). The arguments are the same as `Synthesis.stream()`, except that the `text_iter` should be an asynchronous generator. And it returns an asynchronous generator of `AudioChunk` objects.
 
+#### Stream with Pre-Connected Synthesizer
+In addition to using `Synthesis.stream(text_iterator, **config)` to synthesize in one step, you can also pre-connect first.
+```
+synthesizer = Synthesis(**config).connect()
+#- prepare other resources -#
+synthesizer.stream(text_iterator)
+```
+For more details, see the note of [synthesis.py](nopause/sdk/synthesis.py#L176) 
 
 ### `Class Voice`
 

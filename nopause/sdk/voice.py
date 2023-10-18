@@ -89,7 +89,7 @@ class Voice(BaseAPI):
         return NoPauseResponse.create(data, name='AddVoice')
 
     @classmethod
-    def get_voices(cls, page: int = 1, page_size: int = 10, **kwargs):
+    def get_voices(cls, page: int = 1, page_size: int = 100, **kwargs):
         api = cls(**kwargs)
         try:
             url = cls.protocol + os.path.join(api.parsed_api_base['value'], api.parsed_api_version['value'], cls.name)
