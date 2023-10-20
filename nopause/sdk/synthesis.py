@@ -10,6 +10,7 @@ import websockets
 import ujson as json
 import ssl
 from typing import Any, Iterable, AsyncIterable, Union
+from asyncio.exceptions import CancelledError
 from websockets.client import WebSocketClientProtocol
 from websockets.sync.client import ClientConnection
 from websockets.exceptions import WebSocketException, ConnectionClosed
@@ -29,7 +30,7 @@ class Synthesis(BaseAPI):
     """ A WebSocket client for NoPause TTS synthesis API.
     """
     name: str = 'tts/dual-stream'
-    protocol: str = 'wss://'
+    protocol: str = 'wss'
 
     def __init__(
         self,
@@ -81,17 +82,22 @@ class Synthesis(BaseAPI):
         self.voice_id = voice_id
         self.model_name = model_name
         self.language = language
-        self.audio_config = audio_config
-        self.dual_stream_config = dual_stream_config
+        self.audio_config = audio_config if audio_config is not None else AudioConfig()
+        self.dual_stream_config = dual_stream_config if dual_stream_config is not None else DualStreamConfig()
 
         self.parsed_api_key, self.parsed_api_base, self.parsed_api_version = self.parse_settings(api_key, api_base, api_version)
-        self.api_url = self.protocol + os.path.join(self.parsed_api_base['value'], self.parsed_api_version['value'], self.name)
+        self.protocol = os.environ.get('NO_PAUSE_WS_PROTOCOL', self.protocol)
+        self.api_url = '{protocol}://{path}'.format(protocol=self.protocol, path=os.path.join(self.parsed_api_base['value'], self.parsed_api_version['value'], self.name))
 
         self.bos, self.eos = self.prepare_bos_and_eos(
-            voice_id, model_name, language, audio_config, dual_stream_config
+            voice_id=self.voice_id,
+            model_name=self.model_name,
+            language=self.language,
+            audio_config=self.audio_config,
+            dual_stream_config=self.dual_stream_config
         )
 
-        self.ws = None # webcocket client, could be sync or async
+        self.ws = None # websocket client, could be sync or async
         self._in_use = False
 
         # make sure that one instance processes one request only
@@ -136,26 +142,51 @@ class Synthesis(BaseAPI):
         audio_config: AudioConfig = None,
         dual_stream_config: DualStreamConfig = None
         ):
-        if dual_stream_config is None:
-            dual_stream_config = {}
+        if audio_config is None:
+            audio_config = AudioConfig()
 
-        BOS = {"config": ModelConfig(voice_id=voice_id, model_name=model_name, language=language, dual_stream=dual_stream_config).dict()}
+        if dual_stream_config is None:
+            dual_stream_config = DualStreamConfig()
+
+        BOS = {
+            "config": ModelConfig(voice_id=voice_id, model_name=model_name, language=language, dual_stream=dual_stream_config).dict(),
+            "audio_config": audio_config.dict(by_alias=True),
+            }
         EOS = {"content": TextChunk(text='', is_end=True).dict()}
         return BOS, EOS
+    
+    def parse_result(self, data):
+        if data['code'] != 0:
+            raise NoPauseError(data['status'], code=data['code'])
+    
+    def check_alive(self):
+        alive = True
+        if self.ws is not None:
+            try:
+                self.ws.ping()
+            except ConnectionClosed:
+                alive = False
+        else:
+            alive = False
+        return alive
+
+    async def acheck_alive(self):
+        alive = True
+        if self.ws is not None:
+            try:
+                await self.ws.ping()
+            except ConnectionClosed:
+                alive = False
+        else:
+            alive = False
+        return alive
 
     def connect(self):
         with self.semaphore:
             try:
-                need_to_reconnect = False
-                if self.ws is not None:
-                    try:
-                        self.ws.ping()
-                    except ConnectionClosed:
-                        need_to_reconnect = True
-                else:
-                    need_to_reconnect = True
+                is_alive = self.check_alive()
+                if is_alive: return self
                 
-                if not need_to_reconnect: return self
                 self.ws = websockets.sync.client.connect(
                     self.api_url,
                     additional_headers={
@@ -175,17 +206,10 @@ class Synthesis(BaseAPI):
     async def aconnect(self):
         async with self.async_connect_semaphore:
             try:
-                need_to_reconnect = False
-                if self.ws is not None:
-                    try:
-                        await self.ws.ping()
-                    except ConnectionClosed:
-                        need_to_reconnect = True
-                else:
-                    need_to_reconnect = True
+                is_alive = await self.acheck_alive()
+                if is_alive: return self
 
-                if not need_to_reconnect: return self
-
+                # init connection
                 self.ws = await websockets.client.connect(
                     self.api_url,
                     extra_headers={
@@ -204,10 +228,6 @@ class Synthesis(BaseAPI):
             except BaseException as e:
                 raise e
         return self
-    
-    def parse_result(self, data):
-        if data['code'] != 0:
-            raise NoPauseError(data['status'], code=data['code'])
 
     def __new__(cls, *args, **kwargs):
         """
@@ -255,8 +275,6 @@ class Synthesis(BaseAPI):
                 return self._done
 
             def run(self):
-                # if not self.event.is_set():
-                #     synthesizer.ws.send(json.dumps(synthesizer.bos))
                 # It could be still blocked in the 'for' grammar if the text_iter is blocked
                 for text in text_iter:
                     if self.event.is_set():
@@ -291,11 +309,10 @@ class Synthesis(BaseAPI):
 
         async def send_text():
             try:
-                # await synthesizer.ws.send(json.dumps(synthesizer.bos))
                 async for text in text_iter:
                     await synthesizer.ws.send(json.dumps({"content": TextChunk(text=text, is_end=False).dict()}))
                 await synthesizer.ws.send(json.dumps(synthesizer.eos))
-            except asyncio.CancelledError:
+            except CancelledError:
                 pass
 
         send_text_task = asyncio.create_task(send_text())
@@ -409,7 +426,7 @@ class SynthesisResultGenerator:
             chunk = AudioChunk(
                 data=base64.b64decode(data["audio_content"]),
                 chunk_id=data['tts_response_chunk_meta']['chunk_id'],
-                sample_rate=24000, # default
+                sample_rate=self._synthesizer.audio_config.sample_rate,
                 channels=1, # default
                 rtf=data['tts_response_chunk_meta']['rtf'],
                 chunk_size_us=data['tts_response_chunk_meta']['chunk_size_us'],
@@ -519,6 +536,8 @@ class SynthesisResultGenerator:
         if not self.send_text_task.done():
             self.send_text_task.cancel()
             await self.send_text_task
+        error = self.send_text_task.exception()
+        if error: raise error
         await self.aclose()
 
     def interrupt(self):

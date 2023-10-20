@@ -13,7 +13,7 @@ from nopause.sdk.error import InvalidRequestError, FormatError, NoPauseError
 
 class Voice(BaseAPI):
     name: str = "voices"
-    protocol: str = 'https://'
+    protocol: str = 'https'
 
     def __init__(
         self,
@@ -22,6 +22,7 @@ class Voice(BaseAPI):
         api_version: str = None
     ):
         self.parsed_api_key, self.parsed_api_base, self.parsed_api_version = self.parse_settings(api_key, api_base, api_version)
+        self.protocol = os.environ.get('NO_PAUSE_HTTP_PROTOCOL', self.protocol)
         self.session = requests.Session()
         self.session.headers.update({
             'X-API-KEY': self.parsed_api_key['value'],
@@ -77,7 +78,7 @@ class Voice(BaseAPI):
                 ("description", (None, description)),
                 ("gender", (None, gender)),
             ])
-            url = cls.protocol + os.path.join(api.parsed_api_base['value'], api.parsed_api_version['value'], cls.name)
+            url = '{protocol}://{path}'.format(protocol=api.protocol, path=os.path.join(api.parsed_api_base['value'], api.parsed_api_version['value'], api.name))
             result = api.session.put(url, files=files)
         except RequestException as e:
             raise InvalidRequestError(cls.display_parsed_settings(api.parsed_api_base, api.parsed_api_version, url, error=str(e)))
@@ -92,7 +93,7 @@ class Voice(BaseAPI):
     def get_voices(cls, page: int = 1, page_size: int = 100, **kwargs):
         api = cls(**kwargs)
         try:
-            url = cls.protocol + os.path.join(api.parsed_api_base['value'], api.parsed_api_version['value'], cls.name)
+            url = '{protocol}://{path}'.format(protocol=api.protocol, path=os.path.join(api.parsed_api_base['value'], api.parsed_api_version['value'], api.name))
             result = api.session.get(url, params=dict(page=page, page_size=page_size))
         except RequestException as e:
             raise InvalidRequestError(cls.display_parsed_settings(api.parsed_api_base, api.parsed_api_version, url, error=str(e)))
@@ -109,7 +110,7 @@ class Voice(BaseAPI):
     def delete(cls, voice_id: str, **kwargs):
         api = cls(**kwargs)
         try:
-            url = cls.protocol + os.path.join(api.parsed_api_base['value'], api.parsed_api_version['value'], cls.name)
+            url = '{protocol}://{path}'.format(protocol=api.protocol, path=os.path.join(api.parsed_api_base['value'], api.parsed_api_version['value'], api.name))
             result = api.session.delete(url, json=dict(voice_id=voice_id))
         except RequestException as e:
             raise InvalidRequestError(cls.display_parsed_settings(api.parsed_api_base, api.parsed_api_version, url, error=str(e)))

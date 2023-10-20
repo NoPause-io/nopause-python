@@ -8,6 +8,7 @@ import sounddevice as sd
 import openai
 import nopause
 
+from nopause import AudioConfig
 from nopause.utils.timestamp import time_stamp
 
 # Install sdk packages first:
@@ -29,21 +30,23 @@ openai.api_key = os.environ['OPENAI_API_KEY']
 DEFAULT_PROMPT = "You are a helpful assistant from NoPause IO."
 DEFAULT_MODEL = "gpt-3.5-turbo-0613"
 DEFAULT_VOICE_ID = 'Zoe'
+DEFAULT_SAMPLE_RATE = 24000
 DEFAULT_TIMESTAMP_OUTPUT = 'chat_timestamp.json'
 
 class ChatPlayGround():
-    def __init__(self, prompt: str = DEFAULT_PROMPT, voice_id: str = DEFAULT_VOICE_ID) -> None:
+    def __init__(self, prompt: str = DEFAULT_PROMPT, voice_id: str = DEFAULT_VOICE_ID, sample_rate: int = DEFAULT_SAMPLE_RATE) -> None:
         self.prompt = prompt
         self.memory = []
 
         self.reset()
 
         self.voice_id = voice_id
-        self.synthesizer = nopause.Synthesis(voice_id=self.voice_id)
+        self.sample_rate = sample_rate
+        self.synthesizer = nopause.Synthesis(voice_id=self.voice_id, audio_config=AudioConfig(sample_rate=self.sample_rate))
         time_stamp.add(group='TTS', event='init', use_point=True)
 
         self.play_device = sd.RawOutputStream(
-            samplerate=24000, blocksize=4800,
+            samplerate=DEFAULT_SAMPLE_RATE, blocksize=int(DEFAULT_SAMPLE_RATE*0.02),
             device=sd.query_devices(kind="output")['index'],
             channels=1, dtype='int16',
         )
@@ -61,7 +64,7 @@ class ChatPlayGround():
         async for chunk in audio_chunks:
             time_stamp.add(group='Device', event='receive', use_point=True)
             self.play_device.write(chunk.data)
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.5)
         self.play_device.stop()
 
     async def assistant(self, content: str):
