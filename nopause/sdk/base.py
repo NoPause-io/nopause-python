@@ -19,7 +19,7 @@ class BaseAPI():
             else:
                 final_value = env_value
                 parsed_from = 'environment: {}'.format(env_name)
-        
+
         if final_value is None or final_value.strip() == "":
             raise NoPauseError(f'No {env_name} provided (parsed from {parsed_from}). Set the key by function param or {env_name} environment variable or nopause.{name} first.')
 
@@ -32,7 +32,7 @@ class BaseAPI():
         parsed_api_version = cls.parse_setting('api_version', 'NO_PAUSE_API_VERSION', api_version)
 
         return parsed_api_key, parsed_api_base, parsed_api_version
-    
+
     @classmethod
     def display_parsed_settings(cls, api_base: str, api_version: str, url: str, error: str = None):
         if error is None:

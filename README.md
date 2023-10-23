@@ -1,4 +1,9 @@
 # NoPause Python SDK
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="/assets/logo-NoPause1.png">
+  <source media="(prefers-color-scheme: light)" srcset="/assets/logo-NoPause2.png">
+  <a href="https://nopause.io"> <img alt="NoPause.io logo" src="/assets/logo-NoPause2.png" style="width: 200px;" /> </a>
+</picture>
 
 Stream your LLM output in real-time through NoPause TTS API to produce seamless speech, putting an end to LLM latency woes.
 
@@ -131,11 +136,38 @@ python examples/chat.py
 ```
 
 Note that there are several commands you can input in the chat mode:
-`[done]`: end the current conversation and prepare for a new one. It will clear the memory of GPT.
+`[done]`: ends the current conversation and prepares for a new one. It clears the memory of GPT.
+
 `[exit]`: exit the chat mode and export a timestamp record to a file.
+
 `[repeat] content` or `[r] content`: the assistant will repeat your content. It is used to test what you want to synthesize. The content is not added to the GPT memory.
 
 For more examples, such as ```Asynchronous Streaming Audio Synthesis and Playing``` or ```Interrupting Synthesis```, see [examples/*.py](examples/) and [tests/*.py](tests/).
+
+### Manage Voices
+You can add, delete and list custom voices with the `Voice` class. Here's an example to add a custom voice:
+
+```python
+nopause.api_key = "your_nopause_api_key_here"
+
+# show all available voices
+print(nopause.Voice.get_voices())
+
+# add a custom voice
+audio_files = [
+    "path/to/audio1.wav",
+    "path/to/audio2.wav",
+    "path/to/audio3.wav",
+    "path/to/audio4.wav",
+    "path/to/audio5.wav",
+]
+response = nopause.Voice.add(audio_files, voice_name="my_voice", language="en", description="my voice")
+voice_id = response.voice_id
+print(f'voice id is: {voice_id}')
+
+# delete a custom voice
+nopause.Voice.delete(voice_id)
+```
 
 ## API Reference
 
@@ -169,7 +201,7 @@ Creates a dual-stream synthesis.
 Creates a dual-stream synthesis (asynchronous version). The arguments are the same as `Synthesis.stream()`, except that the `text_iter` should be an asynchronous generator. And it returns an asynchronous generator of `AudioChunk` objects.
 
 #### Stream with Pre-Connected Synthesizer
-In addition to using `Synthesis.stream(text_iterator, **config)` to synthesize in one step, you can also pre-connect first.
+In addition to utilizing `Synthesis.stream(text_iterator, **config)` for one-step synthesis, you can connect beforehand to further decrease latency.
 ```
 synthesizer = Synthesis(**config).connect()
 #- prepare other resources -#
@@ -179,11 +211,11 @@ For more details, see the note of [synthesis.py](nopause/sdk/synthesis.py#L176)
 
 ### `Class Voice`
 
-The voice APIs provides the addition and deletion of custom voice, and can also list all current voices.
+The `Voice` class enables you to add or remove custom voices, as well as list all existing voices.
 
 #### `Voice.add()`
 
-This API could be used to add a new voice with custom audios.
+This API can be utilized to replicate a new voice using multiple references.
 
 ##### Arguments
 
@@ -200,7 +232,7 @@ This API could be used to add a new voice with custom audios.
 
 `AddVoiceResponse`
 
-- `voice_id`: The generated voice ID for the target voice.
+- `voice_id`: The server generated voice ID for the target voice.
 - `voice_name`: The name of target voice.
 - `trace_id`: An ID used to track the current request. It can help locate reported issues.
 
@@ -212,7 +244,7 @@ This API is used to list available voices page by page.
 ##### Arguments
 
 - `page`: The index of page to view. (1-based, default: `1`)
-- `page_size`: The size of one page. (default: `10`)
+- `page_size`: The size of one page. (default: `100`)
 - `api_key`: The API key of NoPause. (default: `None`).
 - `api_base`: The base URL for the NoPause API (default: `None`).
 - `api_version`: The version of the NoPause API to use (default: `None`).
@@ -222,13 +254,13 @@ This API is used to list available voices page by page.
 `VoicesResponse`
 
 - `voices`: A list of a series voice which contains the `voice_name: str`, `voice_id: str`, `voice_type: str`, `description: str` and `audios: list[audio_filename]`
-- `total`: Total numbers of avaiable voices rather than the number of returned voices of current page.
+- `total`: Total number of available voices, including prebuilt voices and custome built voices.
 - `trace_id`: An ID used to track the current request. It can help locate reported issues.
 
 
 #### `Voice.delete()`
 
-This API could be used to delte a custom voice by voice ID.
+This API could be used to delete a custom voice by voice ID.
 
 ##### Arguments
 

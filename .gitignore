@@ -9,3 +9,6 @@ __pycache__
 
 # develop
 dev/
+
+# MacOS
+.DS_Store

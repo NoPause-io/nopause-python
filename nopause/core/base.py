@@ -25,13 +25,13 @@ class NoPauseObject(object):
             return custom_cls(data)
         else:
             return cls(data)
-    
+
     def __str__(self):
         return f'{type(self)}' + '\n' + json.dumps(self, default=lambda o: o.__dict__, indent=2)
-    
+
     def to_dict(self):
         return json.loads(json.dumps(self, default=lambda o: o.__dict__, indent=2))
-        
+
     @classmethod
     def class_suffix(cls):
         return ''

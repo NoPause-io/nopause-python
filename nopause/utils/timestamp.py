@@ -46,7 +46,7 @@ class EventTimeStamp():
                 max_time = new_event.start
             if new_event.end is not None and new_event.end > max_time:
                 max_time = new_event.end
-            
+
             if new_event.start < min_time or min_time == 0:
                 min_time = new_event.start
             if new_event.end is not None and new_event.end < min_time:
@@ -74,7 +74,7 @@ class EventTimeStamp():
                 export_event['elapsed'] = '{:.2f} ms'.format((export_event['end'] - min_time) * 1000)
                 export_event['group_elapsed'] = '{:.2f} ms'.format((export_event['end'] - group_min_time[event.group]) * 1000)
             export_data.append(export_event)
-            
+
 
         print(
             json.dumps(export_data, ensure_ascii=False, indent=2),

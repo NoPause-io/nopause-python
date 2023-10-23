@@ -43,17 +43,20 @@ class Synthesis(BaseAPI):
         api_base: str = None,
         api_version: str = None,
         **kwargs,
-        ):
+    ):
         """
+        Initializes a Synthesis object with the specified configuration.
+
         Args:
-            voice_id: Select the voice to use.
-            model_name: Choose the NoPause model to use.
-            language: Identify the language to use.
-            dual_stream_config: This requires a DualStreamConfig object.
-            audio_config: This pertains to an AudioConfig object.
-            api_key: This refers to the NoPause API key.
-            api_base: This is the base URL for the NoPause API.
-            api_version: Determine the version of the NoPause API to use.
+            voice_id: The ID of the voice to use.
+            model_name: The name of the NoPause model to use.
+            language: The language to use.
+            audio_config: The audio configuration to use.
+            dual_stream_config: The dual stream configuration to use.
+            api_key: The NoPause API key.
+            api_base: The base URL for the NoPause API.
+            api_version: The version of the NoPause API to use.
+            **kwargs: Additional keyword arguments.
 
         Usage:
             (1) Do stream of synthesis after connection to save the time of connection
@@ -113,20 +116,20 @@ class Synthesis(BaseAPI):
     async def ain_use(self):
         async with self.async_semaphore:
             return self._in_use
-    
-    async def set_used(self):
+
+    def set_used(self):
         with self.semaphore:
             if self._in_use:
-                raise NoPauseError('More than one request of synthesis should not be conducted based on one websocket.')
+                raise NoPauseError('Cannot conduct more than one synthesis request on a single websocket.')
             self._in_use = True
 
     async def aset_used(self):
         async with self.async_semaphore:
             if self._in_use:
-                raise NoPauseError('More than one request of synthesis should not be conducted based on one websocket.')
+                raise NoPauseError('Cannot conduct more than one synthesis request on a single websocket.')
             self._in_use = True
 
-    async def free_used(self):
+    def free_used(self):
         with self.semaphore:
             self._in_use = False
 
@@ -243,7 +246,7 @@ class Synthesis(BaseAPI):
         self.stream = self._stream
         self.astream = self._astream
         return self
-    
+
     def _stream(
         cls_or_self,
         text_iter: Iterable[str],
@@ -288,7 +291,7 @@ class Synthesis(BaseAPI):
         send_text_task.start()
 
         return SynthesisResultGenerator(synthesizer, send_text_task, terminate_always=terminate_always)
-    
+
     async def _astream(
         cls_or_self,
         text_iter: AsyncIterable[str],
@@ -331,12 +334,12 @@ class Synthesis(BaseAPI):
         It could be used as both classmethod and instance method, see the note of usage in the Synthesis.__init__.
         Args:
             text_iter: An iterable of strings to be synthesized.
-            voice_id: Which voice to use.
+            voice_id: The ID of the voice to use.
             model_name: Which NoPause model to use.
             language: Which language to use.
-            dual_stream_config: A DualStreamConfig object.
-            audio_config: An AudioConfig object.
-            api_key: NoPause API key.
+            audio_config: The audio configuration to use.
+            dual_stream_config: The dual stream configuration to use.
+            api_key: The NoPause API key.
             api_base: The base URL for the NoPause API.
             api_version: The version of the NoPause API to use.
         Returns:
@@ -355,20 +358,20 @@ class Synthesis(BaseAPI):
         Create an async dual-stream synthesis.
         It could be used as both classmethod and instance method, see the note of usage in the Synthesis.__init__.
         Args:
-            text_iter: An iterable of strings to be synthesized.
-            voice_id: Which voice to use.
+            text_iter: An async iterable of strings to be synthesized.
+            voice_id: The ID of the voice to use.
             model_name: Which NoPause model to use.
             language: Which language to use.
-            dual_stream_config: A DualStreamConfig object.
-            audio_config: An AudioConfig object.
-            api_key: NoPause API key.
+            audio_config: The audio configuration to use.
+            dual_stream_config: The dual stream configuration to use.
+            api_key: The NoPause API key.
             api_base: The base URL for the NoPause API.
             api_version: The version of the NoPause API to use.
         Returns:
             An async generator of AudioChunk objects.
         """
         return await cls._astream(cls, text_iter, *args, **kwargs)
-    
+
     def close(self):
         if self.ws is not None:
             try:

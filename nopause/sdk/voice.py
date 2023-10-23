@@ -27,7 +27,7 @@ class Voice(BaseAPI):
         self.session.headers.update({
             'X-API-KEY': self.parsed_api_key['value'],
             'NOPAUSE_PYTHON_SDK_VERSION': nopause.__version__,
-            })
+        })
 
     @classmethod
     def prepare_audio_files(cls, audio_files: List[str]):
@@ -39,12 +39,12 @@ class Voice(BaseAPI):
                 un_supported_files.append(audio_file)
         if len(un_supported_files) > 0:
             raise FormatError("Only the audio formats with .wav and .mp3 are supported to add voice, but got {}".format(un_supported_files))
-        
+
         form_audio_data = []
         for audio_file in audio_files:
             form_audio_data.append((Path(audio_file).name, open(audio_file, 'rb')))
         return form_audio_data
-        
+
     @classmethod
     def parse_result(cls, result):
         message = None
