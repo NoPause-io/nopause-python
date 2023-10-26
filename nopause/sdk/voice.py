@@ -1,6 +1,7 @@
 import os
 import json
 import requests
+import posixpath
 from pathlib import Path
 from typing import List
 from requests.exceptions import RequestException
@@ -78,7 +79,7 @@ class Voice(BaseAPI):
                 ("description", (None, description)),
                 ("gender", (None, gender)),
             ])
-            url = '{protocol}://{path}'.format(protocol=api.protocol, path=os.path.join(api.parsed_api_base['value'], api.parsed_api_version['value'], api.name))
+            url = '{protocol}://{path}'.format(protocol=api.protocol, path=posixpath.join(api.parsed_api_base['value'], api.parsed_api_version['value'], api.name))
             result = api.session.put(url, files=files)
         except RequestException as e:
             raise InvalidRequestError(cls.display_parsed_settings(api.parsed_api_base, api.parsed_api_version, url, error=str(e)))
@@ -93,7 +94,7 @@ class Voice(BaseAPI):
     def get_voices(cls, page: int = 1, page_size: int = 100, **kwargs):
         api = cls(**kwargs)
         try:
-            url = '{protocol}://{path}'.format(protocol=api.protocol, path=os.path.join(api.parsed_api_base['value'], api.parsed_api_version['value'], api.name))
+            url = '{protocol}://{path}'.format(protocol=api.protocol, path=posixpath.join(api.parsed_api_base['value'], api.parsed_api_version['value'], api.name))
             result = api.session.get(url, params=dict(page=page, page_size=page_size))
         except RequestException as e:
             raise InvalidRequestError(cls.display_parsed_settings(api.parsed_api_base, api.parsed_api_version, url, error=str(e)))
@@ -110,7 +111,7 @@ class Voice(BaseAPI):
     def delete(cls, voice_id: str, **kwargs):
         api = cls(**kwargs)
         try:
-            url = '{protocol}://{path}'.format(protocol=api.protocol, path=os.path.join(api.parsed_api_base['value'], api.parsed_api_version['value'], api.name))
+            url = '{protocol}://{path}'.format(protocol=api.protocol, path=posixpath.join(api.parsed_api_base['value'], api.parsed_api_version['value'], api.name))
             result = api.session.delete(url, json=dict(voice_id=voice_id))
         except RequestException as e:
             raise InvalidRequestError(cls.display_parsed_settings(api.parsed_api_base, api.parsed_api_version, url, error=str(e)))

@@ -169,6 +169,56 @@ print(f'voice id is: {voice_id}')
 nopause.Voice.delete(voice_id)
 ```
 
+## Integration
+We have integrated the Python SDK into Vocode, see details at https://github.com/NoPause-io/vocode-python.
+The example allows you to interact with LLM using the microphone and speaker on your local PC, you can experience it by executing the command below.
+
+```bash
+# Install vocode by pip
+pip install vocode
+
+# Clone the the source code of vocode-python and select the `support_nopause_dual_stream` branch
+git clone https://github.com/NoPause-io/vocode-python.git -b support_nopause_dual_stream
+cd vocode-python
+
+# Create and configure the environments variables of ASR, LLM and TTS (NoPause) in the `.env` file in the workdir
+# Such as:
+#   AZURE_SPEECH_KEY = 
+#   AZURE_SPEECH_REGION = "eastus"
+#   OPENAI_API_KEY =
+#   NO_PAUSE_API_KEY =
+
+# Run this example
+python quickstarts/dual_streaming_conversation_with_nopause_tts.py
+```
+
+Besides, you can also use `Vocode` + `NoPause` + `Twillio` to make phone calls. After you prepare all the servers according to [vocode document](https://docs.vocode.dev/open-source/telephony#overview), it is simple to use our synthesizer in a phone call. Here is an example of outbound call.
+
+1. Similarly, prepare the environments variables of ASR, LLM and TTS (NoPause) in the .env file (assume that you have added `BASE_URL`, `TWILIO_ACCOUNT_SID` and `TWILIO_AUTH_TOKEN` variables)
+2. Add `synthesizer_config` for `OutboundCall` object in the `apps/telephony_app/outbound_call.py` file
+
+```python
+outbound_call = OutboundCall(
+        base_url=BASE_URL,
+        to_phone="+15555555555",
+        from_phone="+15555555555",
+        config_manager=config_manager,
+        transcriber_config=AzureTranscriberConfig.from_telephone_input_device(endpointing_config=PunctuationEndpointingConfig()),
+        agent_config=ChatGPTAgentConfig(
+                initial_message=BaseMessage(text="Hello, how can I help you today?"),
+                prompt_preamble="""The AI is having a pleasant conversation about life""",
+                dual_stream=True # Enable this to send text token by token
+            ), # Instead of using original SpellerAgent, you can also chat with GPT
+        synthesizer_config=NoPauseSynthesizerConfig.from_telephone_output_device() # Add NoPause synthesizer
+    )
+```
+
+3. Fill the `to_phone` and `from_phone` and then run the `outbound_call.py` script
+
+```bash
+python apps/telephony_app/outbound_call.py
+```
+
 ## API Reference
 
 ### `Class Synthesis`

@@ -7,6 +7,7 @@ import asyncio
 import threading
 import inspect
 import websockets
+import posixpath
 import ujson as json
 import ssl
 from typing import Any, Iterable, AsyncIterable, Union
@@ -90,7 +91,7 @@ class Synthesis(BaseAPI):
 
         self.parsed_api_key, self.parsed_api_base, self.parsed_api_version = self.parse_settings(api_key, api_base, api_version)
         self.protocol = os.environ.get('NO_PAUSE_WS_PROTOCOL', self.protocol)
-        self.api_url = '{protocol}://{path}'.format(protocol=self.protocol, path=os.path.join(self.parsed_api_base['value'], self.parsed_api_version['value'], self.name))
+        self.api_url = '{protocol}://{path}'.format(protocol=self.protocol, path=posixpath.join(self.parsed_api_base['value'], self.parsed_api_version['value'], self.name))
 
         self.bos, self.eos = self.prepare_bos_and_eos(
             voice_id=self.voice_id,
