@@ -174,12 +174,15 @@ We have integrated the Python SDK into Vocode, see details at https://github.com
 The example allows you to interact with LLM using the microphone and speaker on your local PC, you can experience it by executing the command below.
 
 ```bash
-# Install vocode by pip
-pip install vocode
-
 # Clone the the source code of vocode-python and select the `support_nopause_dual_stream` branch
 git clone https://github.com/NoPause-io/vocode-python.git -b support_nopause_dual_stream
 cd vocode-python
+
+# If you have not installed poetry, install it first.
+pip install poerty
+
+# Install vocode from local
+poerty install
 
 # Create and configure the environments variables of ASR, LLM and TTS (NoPause) in the `.env` file in the workdir
 # Such as:
