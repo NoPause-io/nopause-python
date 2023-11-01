@@ -179,10 +179,13 @@ git clone https://github.com/NoPause-io/vocode-python.git -b support_nopause_dua
 cd vocode-python
 
 # If you have not installed poetry, install it first.
-pip install poerty
+pip install poetry
 
 # Install vocode from local
-poerty install
+poetry install
+
+# Install NoPause SDK
+pip install nopause
 
 # Create and configure the environments variables of ASR, LLM and TTS (NoPause) in the `.env` file in the workdir
 # Such as:
